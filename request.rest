@@ -1,0 +1,10 @@
+GET http://localhost:3000/POST
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoibW9uaXMiLCJpYXQiOjE1OTA2ODUxOTZ9.pCBYF_0kktzwB8Rh62bFmG2mz6E_xcpW3Rl0iAmmCDI 
+
+POST  http://localhost:3000/LOGIN
+Content-Type: "application/json"
+
+{   
+     "name":"monis",
+    "email":"monisms15@gmail.com"
+}
