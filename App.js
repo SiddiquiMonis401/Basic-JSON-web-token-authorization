@@ -1,12 +1,15 @@
+require('dotenv').config();
 const express = require('express');
 const app = express();
 const jwt = require('jsonwebtoken');
 
 app.use(express.json());
 
+let refreshTokenArray = [];
+
 const post = [
     {
-    name:'Monis',
+    name:'monis',
     title:'post1'
 },
     {
@@ -16,18 +19,38 @@ const post = [
 ]
 
 app.get('/post', AuthenticateUser , (req,res,next) => {
-   res.send(req.user);
 
+   res.send(post.filter(items => items.name ===  req.user.name));
+
+})
+
+app.post('/token',(req,res,next) => {
+    let token = req.body.token;
+    if(token === null) return res.send("null");
+    if(!refreshTokenArray.includes(token)) return res.sendStatus(403);
+    jwt.verify(token,process.env.REFRESH_SECRET_TOKEN , (err,user) => {
+        if(err) res.send("err");
+        let userName ={name: user.name};
+        let acessToken = jwt.sign(userName,process.env.ACCESS_SECRET_TOKEN);
+        res.json({acessToken:acessToken});
+    } )
+})
+
+
+app.delete('/logout',(req,res) => {
+   let refreshToken = req.body.token;
+  refreshTokenArray = refreshTokenArray.filter(items => items !== refreshToken )
+   res.send("LOGOUT")
 })
 
 app.post('/login',(req,res,next) => {
     const userName = req.body.name;
     const user = {name:userName};
     
-    const accessToken1 = 'bc6616810748f82233e36371e933441f93faec2b3828d2fa2979cee5dad3c0984514fc2337dd3794122d1a7b35ddee30905aea6873291427e5b561e54b4f54b1'
-    const accessToken = jwt.sign(user, accessToken1);
-    
-    res.json(accessToken);
+    const accessToken = jwt.sign(user, process.env.ACCESS_SECRET_TOKEN );
+    const refreshToken = jwt.sign(user, process.env.REFRESH_SECRET_TOKEN);  
+     refreshTokenArray.push(refreshToken);
+    res.json({"acessToken":accessToken,"refreshToken":refreshToken});
 })
 
 function AuthenticateUser(req,res,next){
@@ -36,7 +59,7 @@ function AuthenticateUser(req,res,next){
 
     if(auth===null) return res.sendStatus(403);
 
-    jwt.verify(token, 'bc6616810748f82233e36371e933441f93faec2b3828d2fa2979cee5dad3c0984514fc2337dd3794122d1a7b35ddee30905aea6873291427e5b561e54b4f54b1' , (err,user) =>{
+    jwt.verify(token, process.env.ACCESS_SECRET_TOKEN  , (err,user) =>{
         if(err) return res.send(err);
 
         req.user = user;
